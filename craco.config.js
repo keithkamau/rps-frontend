@@ -1,9 +1,6 @@
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-
-module.exports = {
+export default {
   webpack: {
     configure: (webpackConfig) => {
-      // Change the template path
       const htmlPlugin = webpackConfig.plugins.find(
         (plugin) => plugin.constructor.name === "HtmlWebpackPlugin",
       );

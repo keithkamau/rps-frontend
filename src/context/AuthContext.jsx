@@ -1,13 +1,12 @@
-import React, { createContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { authService } from "../services/authService";
 import { authAPI } from "../services/api";
 import toast from "react-hot-toast";
-
-export const AuthContext = createContext(null);
+import { AuthContext } from "./AuthContextValue";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!authService.getToken());
 
   useEffect(() => {
     const token = authService.getToken();
@@ -17,8 +16,6 @@ export const AuthProvider = ({ children }) => {
         .then((res) => setUser(res.data.user))
         .catch(() => authService.clearSession())
         .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
     }
   }, []);
 

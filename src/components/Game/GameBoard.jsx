@@ -1,4 +1,3 @@
-import React from "react";
 
 const GameBoard = ({ children }) => {
   return (

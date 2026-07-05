@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { GAME_TIPS, EMOJIS } from "../../utils/constants";
 
 const GameTips = () => {

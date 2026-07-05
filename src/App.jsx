@@ -1,13 +1,18 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/AuthContext";
+import "./App.css";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import { useAuth } from "./hooks/useAuth";
 import Navbar from "./components/Common/Navbar";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import GameBoard from "./components/Game/GameBoard";
 import GameTips from "./components/Common/GameTips";
+import Lobby from "./components/Tournament/Lobby";
+import Bracket from "./components/Tournament/Bracket";
+import Leaderboard from "./components/Dashboard/Leaderboard";
+import Profile from "./components/Dashboard/Profile";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -21,6 +26,17 @@ const Home = () => (
     <GameTips />
   </GameBoard>
 );
+
+const Tournament = () => {
+  const [selectedTournamentId, setSelectedTournamentId] = React.useState(null);
+
+  return (
+    <>
+      <Lobby onSelectTournament={setSelectedTournamentId} />
+      <Bracket tournamentId={selectedTournamentId} />
+    </>
+  );
+};
 
 function App() {
   return (
@@ -36,6 +52,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/tournament'
+              element={
+                <ProtectedRoute>
+                  <Tournament />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/leaderboard'
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/profile'
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />

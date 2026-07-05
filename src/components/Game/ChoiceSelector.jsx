@@ -1,4 +1,3 @@
-import React from "react";
 import { CHOICES, EMOJIS } from "../../utils/constants";
 
 const ChoiceSelector = ({ onSelect, disabled = false, selectedChoice }) => {
