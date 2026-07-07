@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { authAPI } from "../../services/api";
+import api from "../../services/api";
 
 const Leaderboard = () => {
   const { user } = useAuth();
@@ -8,8 +8,7 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const api = require("../../services/api");
-    api.default.get("/api/admin/leaderboard")
+    api.get("/api/admin/leaderboard")
       .then((res) => {
         setPlayers(res.data.leaderboard || []);
       })
