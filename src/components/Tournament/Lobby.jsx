@@ -7,23 +7,45 @@ const Lobby = ({ onSelectTournament }) => {
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joiningId, setJoiningId] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [tournamentName, setTournamentName] = useState("");
 
-  useEffect(() => {
+  const loadTournaments = () => {
+    setLoading(true);
     tournamentAPI
       .getActiveTournaments()
       .then((res) => {
         const items = res.data.tournaments || res.data || [];
-        if (Array.isArray(items) && items.length) {
-          setTournaments(items);
-        } else {
-          toast("No tournaments available. Create one!");
-        }
+        setTournaments(Array.isArray(items) ? items : []);
       })
       .catch(() => {
         toast.error("Could not load tournaments");
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadTournaments();
   }, []);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    const name = tournamentName.trim();
+    if (!name) return toast.error("Enter a tournament name");
+
+    setCreating(true);
+    try {
+      const res = await tournamentAPI.createTournament(name);
+      toast.success("Tournament created!");
+      setTournamentName("");
+      loadTournaments();
+      onSelectTournament?.(res.data.tournament.id);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Could not create tournament");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleJoin = async (tournament) => {
     setJoiningId(tournament.id);
@@ -42,11 +64,30 @@ const Lobby = ({ onSelectTournament }) => {
   return (
     <section className='bg-gray-900 py-8'>
       <div className='max-w-7xl mx-auto px-4'>
-        <div className='mb-6'>
-          <h1 className='text-4xl font-bold text-white'>Tournament Lobby</h1>
-          <p className='text-gray-400 mt-2'>
-            Join an open bracket and play when enough players are ready.
-          </p>
+        <div className='mb-6 flex items-center justify-between flex-wrap gap-4'>
+          <div>
+            <h1 className='text-4xl font-bold text-white'>Tournament Lobby</h1>
+            <p className='text-gray-400 mt-2'>
+              Create or join a tournament. Games start when 4+ players join.
+            </p>
+          </div>
+
+          <form onSubmit={handleCreate} className='flex gap-2'>
+            <input
+              type='text'
+              value={tournamentName}
+              onChange={(e) => setTournamentName(e.target.value)}
+              placeholder='Tournament name...'
+              className='px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500'
+            />
+            <button
+              type='submit'
+              disabled={creating}
+              className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-60 whitespace-nowrap'
+            >
+              {creating ? "Creating..." : "Create Tournament"}
+            </button>
+          </form>
         </div>
 
         {loading ? (
@@ -56,9 +97,7 @@ const Lobby = ({ onSelectTournament }) => {
         ) : tournaments.length === 0 ? (
           <div className='text-gray-300 bg-gray-800 rounded-xl p-6 text-center'>
             <p className='text-lg mb-2'>No active tournaments</p>
-            <p className='text-sm text-gray-500'>
-              Create one from the tournament page or ask an admin
-            </p>
+            <p className='text-sm text-gray-500'>Create one above to get started!</p>
           </div>
         ) : (
           <div className='grid gap-4 md:grid-cols-2'>
@@ -73,10 +112,10 @@ const Lobby = ({ onSelectTournament }) => {
                   <div className='flex items-start justify-between gap-4'>
                     <div>
                       <h2 className='text-xl font-bold text-white'>
-                        {tournament.name || "Open Tournament"}
+                        {tournament.name}
                       </h2>
                       <p className='text-gray-400 capitalize mt-1'>
-                        {tournament.status || "open"}
+                        {tournament.status}
                       </p>
                     </div>
                     <span className='bg-blue-600 text-white text-sm px-3 py-1 rounded-full'>
@@ -84,19 +123,27 @@ const Lobby = ({ onSelectTournament }) => {
                     </span>
                   </div>
 
+                  <div className='mt-5 h-2 bg-gray-700 rounded-full overflow-hidden'>
+                    <div
+                      className='h-full bg-blue-500 transition-all'
+                      style={{
+                        width: `${Math.min((playerCount / MIN_PLAYERS) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+
                   <button
                     onClick={() => handleJoin(tournament)}
-                    disabled={
-                      joiningId === tournament.id ||
-                      tournament.status === "active"
-                    }
+                    disabled={joiningId === tournament.id || tournament.status === 'active' || tournament.status === 'completed'}
                     className='mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg disabled:opacity-60'
                   >
                     {joiningId === tournament.id
                       ? "Joining..."
-                      : tournament.status === "active"
+                      : tournament.status === 'active'
                         ? "In Progress"
-                        : "Join Tournament"}
+                        : tournament.status === 'completed'
+                          ? "Finished"
+                          : "Join Tournament"}
                   </button>
                 </article>
               );
@@ -109,4 +156,3 @@ const Lobby = ({ onSelectTournament }) => {
 };
 
 export default Lobby;
-
