@@ -1,4 +1,3 @@
-cat > (src / components / Tournament / Lobby.jsx) << "EOF";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { tournamentAPI } from "../../services/api";
@@ -110,4 +109,4 @@ const Lobby = ({ onSelectTournament }) => {
 };
 
 export default Lobby;
-EOF;
+
