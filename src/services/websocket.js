@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { authService } from "./authService";
 
-const SOCKET_URL = process.env.REACT_APP_WS_URL || "http://localhost:5000";
+const SOCKET_URL = "https://rps-backend-ro2g.onrender.com";
 
 class WebSocketService {
   socket = null;

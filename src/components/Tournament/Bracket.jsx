@@ -3,57 +3,6 @@ import toast from "react-hot-toast";
 import { tournamentAPI } from "../../services/api";
 import Matchup from "./Matchup";
 
-const demoRounds = [
-  {
-    name: "Semifinals",
-    matches: [
-      {
-        id: "sf-1",
-        matchNumber: 1,
-        status: "active",
-        player1: { id: "p1", username: "You" },
-        player2: { id: "p2", username: "Rival" },
-      },
-      {
-        id: "sf-2",
-        matchNumber: 2,
-        status: "pending",
-        player1: { id: "p3", username: "Alex" },
-        player2: null,
-      },
-    ],
-  },
-  {
-    name: "Final",
-    matches: [
-      {
-        id: "final",
-        matchNumber: 3,
-        status: "pending",
-        player1: null,
-        player2: null,
-      },
-    ],
-  },
-];
-
-const normalizeRounds = (bracket) => {
-  const source = bracket?.rounds || bracket?.matches || bracket || [];
-  if (!Array.isArray(source)) return [];
-
-  if (source[0]?.matches) return source;
-
-  return source.reduce((rounds, match) => {
-    const roundName = match.roundName || `Round ${match.round || 1}`;
-    const round = rounds.find((item) => item.name === roundName);
-    if (round) {
-      round.matches.push(match);
-      return rounds;
-    }
-    return [...rounds, { name: roundName, matches: [match] }];
-  }, []);
-};
-
 const Bracket = ({ tournamentId }) => {
   const [bracket, setBracket] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -65,9 +14,10 @@ const Bracket = ({ tournamentId }) => {
       setLoading(true);
       try {
         const res = await tournamentAPI.getBracket(tournamentId);
-        setBracket(res.data.bracket || res.data);
+        setBracket(res.data);
       } catch {
         toast.error("Could not load bracket");
+        setBracket(null);
       } finally {
         setLoading(false);
       }
@@ -77,9 +27,20 @@ const Bracket = ({ tournamentId }) => {
   }, [tournamentId]);
 
   const rounds = useMemo(() => {
-    const normalized = normalizeRounds(bracket);
-    return normalized.length ? normalized : demoRounds;
+    if (!bracket?.rounds) return [];
+    return Object.entries(bracket.rounds).map(([name, matches]) => ({
+      name: name.replace("_", " ").toUpperCase(),
+      matches
+    }));
   }, [bracket]);
+
+  if (!tournamentId) {
+    return (
+      <div className='text-gray-300 bg-gray-800 rounded-xl p-6 text-center'>
+        Select a tournament to view its bracket
+      </div>
+    );
+  }
 
   return (
     <section className='bg-gray-900 py-8'>
@@ -95,16 +56,21 @@ const Bracket = ({ tournamentId }) => {
           <div className='text-gray-300 bg-gray-800 rounded-xl p-6'>
             Loading bracket...
           </div>
+        ) : rounds.length === 0 ? (
+          <div className='text-gray-300 bg-gray-800 rounded-xl p-6 text-center'>
+            <p>No matches yet</p>
+            <p className='text-sm text-gray-500 mt-1'>Waiting for players to join</p>
+          </div>
         ) : (
           <div className='grid gap-6 lg:grid-cols-3'>
             {rounds.map((round, index) => (
-              <div key={round.id || round.name || index} className='space-y-4'>
+              <div key={index} className='space-y-4'>
                 <h3 className='text-lg font-semibold text-blue-300'>
-                  {round.name || `Round ${index + 1}`}
+                  {round.name}
                 </h3>
-                {(round.matches || []).map((match, matchIndex) => (
+                {(round.matches || []).map((match) => (
                   <Matchup
-                    key={match.id || match._id || matchIndex}
+                    key={match.id}
                     match={match}
                   />
                 ))}
