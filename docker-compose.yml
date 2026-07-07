@@ -1,8 +1,18 @@
- frontend:
+services:
+  frontend:
     build:
-      context: ./frontend
+      context: .  
     container_name: rps-frontend
     ports:
       - "3000:80"
     depends_on:
       - backend
+
+  backend:
+    build:
+      context: ../rps-backend  
+    container_name: rps-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/rps
