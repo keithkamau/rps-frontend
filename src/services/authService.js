@@ -1,5 +1,5 @@
-const TOKEN_KEY = "token";
-const USER_KEY = "user";
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
 
 export const authService = {
   setSession(token, user) {
@@ -12,8 +12,12 @@ export const authService = {
   },
 
   getUser() {
-    const user = localStorage.getItem(USER_KEY);
-    return user ? JSON.parse(user) : null;
+    try {
+      const user = localStorage.getItem(USER_KEY);
+      return user ? JSON.parse(user) : null;
+    } catch {
+      return null;
+    }
   },
 
   clearSession() {
@@ -23,5 +27,5 @@ export const authService = {
 
   isAuthenticated() {
     return !!this.getToken();
-  },
+  }
 };

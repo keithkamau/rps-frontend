@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { authService } from "../services/authService";
 import { authAPI } from "../services/api";
 import toast from "react-hot-toast";
@@ -6,43 +6,51 @@ import { AuthContext } from "./AuthContextValue";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(() => !!authService.getToken());
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const checkAuth = useCallback(() => {
     const token = authService.getToken();
-    if (token) {
-      authAPI
-        .getMe()
-        .then((res) => setUser(res.data.user))
-        .catch(() => authService.clearSession())
-        .finally(() => setLoading(false));
+    if (!token) {
+      setLoading(false);
+      return;
     }
+
+    const cachedUser = authService.getUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
+
+    authAPI
+      .getMe()
+      .then((res) => {
+        setUser(res.data.user);
+        authService.setSession(token, res.data.user);
+      })
+      .catch(() => {
+        authService.clearSession();
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   const login = async (username, password) => {
-    try {
-      const res = await authAPI.login({ username, password });
-      authService.setSession(res.data.token, res.data.user);
-      setUser(res.data.user);
-      toast.success("Welcome back!");
-      return true;
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Login failed");
-      return false;
-    }
+    const res = await authAPI.login({ username, password });
+    authService.setSession(res.data.token, res.data.user);
+    setUser(res.data.user);
+    toast.success("Welcome back!");
+    return true;
   };
 
   const signup = async (username, email, password) => {
-    try {
-      const res = await authAPI.signup({ username, email, password });
-      authService.setSession(res.data.token, res.data.user);
-      setUser(res.data.user);
-      toast.success("Account created!");
-      return true;
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Signup failed");
-      return false;
-    }
+    const res = await authAPI.signup({ username, email, password });
+    authService.setSession(res.data.token, res.data.user);
+    setUser(res.data.user);
+    toast.success("Account created!");
+    return true;
   };
 
   const logout = () => {
@@ -60,6 +68,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         loading,
         isAuthenticated: !!user,
+        refreshUser: checkAuth,
       }}
     >
       {children}
